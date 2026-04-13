@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>動物初階版 v4</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: "PingFang HK", "Microsoft JhengHei", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 16px;
+      background: #f0faf0;
+      color: #2d3436;
+      text-align: center;
+    }
+
+    .header-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      max-width: 920px;
+      margin: 0 auto 12px;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      color: #27ae60;
+      text-shadow: 1px 1px 0 #d5f5e3;
+    }
+
+    h2 {
+      margin-top: 0;
+      color: #27ae60;
+      font-size: 24px;
+    }
+
+    .score-board {
+      background: #d5f5e3;
+      color: #d63031;
+      padding: 8px 16px;
+      border-radius: 16px;
+      border: 3px solid #82e0aa;
+      font-size: 20px;
+      font-weight: bold;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.12);
+      transition: 0.25s;
+    }
+
+    .score-board.pop {
+      transform: scale(1.12);
+      background: #55efc4;
+      color: #2d3436;
+      border-color: #00b894;
+    }
+
+    .level-container {
+      display: none;
+      background: #ffffff;
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 22px 18px;
+      border-radius: 22px;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+      animation: fadeIn 0.35s ease;
+    }
+
+    .level-container.active {
+      display: block;
+    }
+
+    .instruction {
+      font-size: 18px;
+      color: #636e72;
+      margin: 6px 0 16px;
+      line-height: 1.6;
+    }
+
+    .feedback {
+      min-height: 34px;
+      margin-top: 12px;
+      font-size: 21px;
+      font-weight: bold;
+    }
+
+    .messy-area {
+      min-height: 120px;
+      background: linear-gradient(135deg, #a9dfbf44, #f9e79f44);
+      border: 4px solid #82e0aa;
+      border-radius: 18px;
+      padding: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .messy-area-label {
+      width: 100%;
+      font-size: 15px;
+      color: #636e72;
+      margin-bottom: 2px;
+    }
+
+    .basket-area {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+    }
+
+    .basket {
+      min-height: 185px;
+      border: 3px dashed #27ae60;
+      border-radius: 18px;
+      background: #f0faf4;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: 0.2s;
+      cursor: pointer;
+    }
+
+    .basket-title {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 6px;
+      pointer-events: none;
+    }
+
+    .basket-emoji {
+      font-size: 30px;
+      margin-bottom: 8px;
+      pointer-events: none;
+    }
+
+    .basket-dropzone {
+      width: 100%;
+      min-height: 110px;
+      display: flex;
+      justify-content: center;
+      align-content: flex-start;
+      flex-wrap: wrap;
+      gap: 6px;
+      pointer-events: none;
+    }
+
+    .animal-item {
+      font-size: 40px;
+      line-height: 1;
+      cursor: grab;
+      user-select: none;
+      transition: transform 0.12s, opacity 0.12s, background 0.12s;
+      border-radius: 12px;
+      padding: 2px 4px;
+      touch-action: none;
+    }
+
+    .animal-item:active {
+      cursor: grabbing;
+      transform: scale(1.08);
+    }
+
+    .animal-item.selected {
+      background: rgba(255, 255, 255, 0.7);
+      outline: 3px dashed #d63031;
+      transform: scale(1.08);
+    }
+
+    .animal-item.dragging {
+      opacity: 0.45;
+    }
+
+    .btn-next {
+      display: none;
+      margin-top: 18px;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 24px;
+      font-size: 21px;
+      font-weight: bold;
+      color: #fff;
+      background: #27ae60;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: 0.2s;
+    }
+
+    .btn-next:hover {
+      transform: scale(1.04);
+      background: #1e8449;
+    }
+
+    .chart-legend {
+      display: inline-block;
+      margin-bottom: 14px;
+      padding: 8px 16px;
+      background: #27ae60;
+      color: #fff;
+      border-radius: 999px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .supply-area {
+      min-height: 84px;
+      background: #d5f5e3;
+      border-radius: 16px;
+      padding: 12px;
+      margin-bottom: 18px;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .chart-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: auto;
+      margin: 0 auto;
+    }
+
+    .chart-graph-area {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 10px;
+      padding-bottom: 0;
+      border-bottom: 4px solid #2d3436;
+    }
+
+    .y-axis {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      height: 250px;
+      width: 40px;
+      margin-right: 8px;
+    }
+
+    .y-label {
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      font-size: 18px;
+      font-weight: bold;
+      color: #636e72;
+    }
+
+    .chart-columns-wrap {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+    }
+
+    .chart-column {
+      width: 95px;
+      height: 250px;
+      background: #f8fdf9;
+      border-left: 2px dashed #b2bec3;
+      border-right: 2px dashed #b2bec3;
+      display: flex;
+      flex-direction: column-reverse;
+      justify-content: flex-start;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .chart-slot {
+      width: 100%;
+      height: 50px;
+      border-bottom: 1px dotted #dfe6e9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 34px;
+    }
+
+    .chart-x-icons {
+      display: flex;
+      margin-top: 10px;
+      width: auto;
+    }
+
+    .y-axis-spacer {
+      width: 40px;
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+
+    .chart-x-wrap {
+      display: flex;
+      gap: 10px;
+    }
+
+    .chart-icon-wrapper {
+      width: 95px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+      color: #2d3436;
+    }
+
+    .chart-icon {
+      display: block;
+      font-size: 34px;
+      margin-bottom: 4px;
+    }
+
+    .question-container {
+      display: none;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 3px dashed #dfe6e9;
+    }
+
+    .question-card {
+      background: #d5f5e3;
+      color: #1e8449;
+      border-radius: 16px;
+      padding: 18px;
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 16px;
+    }
+
+    .options-area {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .option-btn {
+      border: 3px solid #27ae60;
+      background: #fff;
+      color: #2d3436;
+      border-radius: 12px;
+      padding: 10px 22px;
+      font-size: 21px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .option-btn:hover:not(:disabled) {
+      background: #27ae60;
+      color: #fff;
+    }
+
+    .option-btn:disabled {
+      opacity: 0.7;
+      cursor: default;
+    }
+
+    .result-msg {
+      min-height: 36px;
+      margin-top: 14px;
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    .error-flash {
+      background: #ffb3b3 !important;
+      transform: scale(1.02);
+    }
+
+    .final-box {
+      background: #dff9fb;
+      border-radius: 18px;
+      padding: 24px 18px;
+      color: #00b894;
+    }
+
+    .final-score {
+      font-size: 40px;
+      color: #d63031;
+      font-weight: bold;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 640px) {
+      h1 {
+        font-size: 24px;
+      }
+
+      .instruction {
+        font-size: 17px;
+      }
+
+      .chart-column,
+      .chart-icon-wrapper {
+        width: 78px;
+      }
+
+      .question-card {
+        font-size: 21px;
+      }
+
+      .option-btn {
+        font-size: 19px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header-container">
+    <h1>🐾 動物初階版 v4</h1>
+    <div class="score-board">⭐ 分數：<span id="score">0</span></div>
+  </div>
+
+  <div id="level-1" class="level-container active">
+    <h2>任務一：動物大分類 🧺</h2>
+    <p class="instruction">先把動物放進正確的分類格。放對一個得 <strong>5分</strong>。</p>
+
+    <div id="messy-area" class="messy-area">
+      <div class="messy-area-label">📦 混合動物區（由這裡開始分類）</div>
+    </div>
+
+    <div id="basket-area" class="basket-area"></div>
+    <div id="level1-feedback" class="feedback"></div>
+
+    <button id="btn-next-1" class="btn-next" onclick="goToLevel2()">分類完成，去畫圖表 ➡️</button>
+  </div>
+
+  <div id="level-23" class="level-container">
+    <h2 id="level-title">任務二：建立象形圖 📊</h2>
+    <p id="level-instruction" class="instruction">把動物一個一個放上圖表。每放對一個得 <strong>5分</strong>。</p>
+
+    <div id="chart-legend" class="chart-legend">📝 一個圖形代表 1 個</div>
+    <div id="supply-area" class="supply-area"></div>
+
+    <div class="chart-container">
+      <div class="chart-graph-area">
+        <div id="y-axis" class="y-axis"></div>
+        <div id="chart-columns-wrap" class="chart-columns-wrap"></div>
+      </div>
+
+      <div class="chart-x-icons">
+        <div class="y-axis-spacer"></div>
+        <div id="chart-x-wrap" class="chart-x-wrap"></div>
+      </div>
+    </div>
+
+    <div id="level23-feedback" class="feedback"></div>
+    <button id="btn-next-2" class="btn-next" onclick="goToLevel3()">完成圖表，開始讀圖 ➡️</button>
+
+    <div id="question-container" class="question-container">
+      <div id="q-text" class="question-card">問題載入中...</div>
+      <div id="q-options" class="options-area"></div>
+      <div id="q-msg" class="result-msg"></div>
+    </div>
+  </div>
+
+  <script>
+    const MAX_Y = 5;
+
+    function generateAnimalsData() {
+      return [
+        { type: "dog", emoji: "🐶", label: "小狗", unit: "隻", count: 2 },
+        { type: "cat", emoji: "🐱", label: "小貓", unit: "隻", count: 4 },
+        { type: "rabbit", emoji: "🐰", label: "小兔", unit: "隻", count: 3 }
+      ];
+    }
+
+    function generateQuestions(d) {
+      const dog = d.find(x => x.type === "dog");
+      const cat = d.find(x => x.type === "cat");
+      const rabbit = d.find(x => x.type === "rabbit");
+
+      return [
+        {
+          q: "1. 小狗有多少隻？",
+          options: ["1", "2", "3"],
+          ans: 1,
+          hint: `小狗有 ${dog.count} 隻。`
+        },
+        {
+          q: "2. 小貓有多少隻？",
+          options: ["3", "4", "5"],
+          ans: 1,
+          hint: `小貓有 ${cat.count} 隻。`
+        },
+        {
+          q: "3. 哪一種動物最多？",
+          options: ["小狗", "小貓", "小兔"],
+          ans: 1,
+          hint: `小貓最多，有 ${cat.count} 隻。`
+        }
+      ];
+    }
+
+    const animalsData = generateAnimalsData();
+    const questions = generateQuestions(animalsData);
+
+    let selectedItem = null;
+    let score = 0;
+    let currentQ = 0;
+
+    function addScore(points) {
+      score += points;
+      const scoreEl = document.getElementById("score");
+      const scoreBoard = scoreEl.parentElement;
+      scoreEl.textContent = score;
+      scoreBoard.classList.remove("pop");
+      void scoreBoard.offsetWidth;
+      scoreBoard.classList.add("pop");
+    }
+
+    function setFeedback(id, text, color = "#00b894") {
+      const el = document.getElementById(id);
+      el.textContent = text;
+      el.style.color = color;
+    }
+
+    function flashError(el) {
+      el.classList.add("error-flash");
+      setTimeout(() => el.classList.remove("error-flash"), 280);
+    }
+
+    function clearSelection() {
+      if (selectedItem) {
+        selectedItem.classList.remove("selected");
+      }
+      selectedItem = null;
+    }
+
+    function shuffle(array) {
+      const newArr = [...array];
+      for (let i = newArr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+      }
+      return newArr;
+    }
+
+    function createAnimalElement(item, dropCallback) {
+      const el = document.createElement("div");
+      el.className = "animal-item";
+      el.textContent = item.emoji;
+      el.dataset.type = item.type;
+      el.draggable = true;
+
+      el.addEventListener("dragstart", (e) => {
+        selectedItem = el;
+        e.dataTransfer.setData("text/plain", item.type);
+        setTimeout(() => el.classList.add("dragging"), 0);
+      });
+
+      el.addEventListener("dragend", () => {
+        el.classList.remove("dragging");
+        if (selectedItem === el) clearSelection();
+      });
+
+      el.addEventListener("click", () => {
+        if (selectedItem === el) {
+          clearSelection();
+        } else {
+          clearSelection();
+          selectedItem = el;
+          el.classList.add("selected");
+        }
+      });
+
+      addTouchDrag(el, (animalEl, dropTarget) => {
+        if (!dropTarget) {
+          clearSelection();
+          return;
+        }
+        if (animalEl.dataset.type === dropTarget.dataset.type) {
+          dropCallback(animalEl, dropTarget);
+        } else {
+          flashError(dropTarget);
+          const msg = dropTarget.classList.contains("basket")
+            ? "這隻動物不是放在這個分類格。"
+            : "看看圖表底下的名稱，再放一次。";
+          const feedbackId = dropTarget.classList.contains("basket")
+            ? "level1-feedback"
+            : "level23-feedback";
+          setFeedback(feedbackId, msg, "#d63031");
+          clearSelection();
+        }
+      });
+
+      return el;
+    }
+
+    function bindDropTarget(target, successCallback, feedbackId, wrongMessage) {
+      target.addEventListener("dragover", (e) => e.preventDefault());
+
+      target.addEventListener("drop", (e) => {
+        e.preventDefault();
+        if (!selectedItem) return;
+        if (selectedItem.dataset.type === target.dataset.type) {
+          successCallback(selectedItem, target);
+        } else {
+          flashError(target);
+          setFeedback(feedbackId, wrongMessage, "#d63031");
+          clearSelection();
+        }
+      });
+
+      target.addEventListener("click", () => {
+        if (!selectedItem) return;
+        if (selectedItem.dataset.type === target.dataset.type) {
+          successCallback(selectedItem, target);
+        } else {
+          flashError(target);
+          setFeedback(feedbackId, wrongMessage, "#d63031");
+          clearSelection();
+        }
+      });
+    }
+
+    function renderBaskets() {
+      const basketArea = document.getElementById("basket-area");
+      basketArea.innerHTML = "";
+
+      animalsData.forEach((animal) => {
+        const basket = document.createElement("div");
+        basket.className = "basket";
+        basket.dataset.type = animal.type;
+
+        basket.innerHTML = `
+          <div class="basket-emoji">${animal.emoji}</div>
+          <div class="basket-title">${animal.label}</div>
+          <div class="basket-dropzone"></div>
+        `;
+
+        bindDropTarget(
+          basket,
+          moveToBasket,
+          "level1-feedback",
+          "這隻動物不是放在這個分類格。"
+        );
+
+        basketArea.appendChild(basket);
+      });
+    }
+
+    function initLevel1() {
+      renderBaskets();
+
+      const messyArea = document.getElementById("messy-area");
+      const label = `<div class="messy-area-label">📦 混合動物區（由這裡開始分類）</div>`;
+      messyArea.innerHTML = label;
+
+      const allAnimals = [];
+      animalsData.forEach((animal) => {
+        for (let i = 0; i < animal.count; i++) {
+          allAnimals.push({ type: animal.type, emoji: animal.emoji });
+        }
+      });
+
+      shuffle(allAnimals).forEach((animal) => {
+        const el = createAnimalElement(animal, moveToBasket);
+        messyArea.appendChild(el);
+      });
+
+      setFeedback("level1-feedback", "先試試把動物分好類。", "#27ae60");
+      document.getElementById("btn-next-1").style.display = "none";
+    }
+
+    function moveToBasket(animalEl, basketEl) {
+      animalEl.draggable = false;
+      animalEl.classList.remove("dragging");
+      clearSelection();
+
+      basketEl.querySelector(".basket-dropzone").appendChild(animalEl);
+      addScore(5);
+      setFeedback("level1-feedback", "放對了，繼續努力！", "#00b894");
+
+      const leftCount = document.getElementById("messy-area").querySelectorAll(".animal-item").length;
+      if (leftCount === 0) {
+        setFeedback("level1-feedback", "太好了，全部分類完成！", "#00b894");
+        document.getElementById("btn-next-1").style.display = "inline-block";
+      }
+    }
+
+    function renderYAxis() {
+      const yAxis = document.getElementById("y-axis");
+      yAxis.innerHTML = "";
+      for (let i = MAX_Y; i >= 1; i--) {
+        const label = document.createElement("div");
+        label.className = "y-label";
+        label.textContent = i;
+        yAxis.appendChild(label);
+      }
+    }
+
+    function renderChart() {
+      renderYAxis();
+
+      const columnsWrap = document.getElementById("chart-columns-wrap");
+      const xWrap = document.getElementById("chart-x-wrap");
+      columnsWrap.innerHTML = "";
+      xWrap.innerHTML = "";
+
+      animalsData.forEach((animal) => {
+        const col = document.createElement("div");
+        col.className = "chart-column";
+        col.dataset.type = animal.type;
+
+        bindDropTarget(
+          col,
+          moveToChart,
+          "level23-feedback",
+          "看看圖表底下的名稱，再放一次。"
+        );
+
+        columnsWrap.appendChild(col);
+
+        const iconWrap = document.createElement("div");
+        iconWrap.className = "chart-icon-wrapper";
+        iconWrap.innerHTML = `<span class="chart-icon">${animal.emoji}</span>${animal.label}`;
+        xWrap.appendChild(iconWrap);
+      });
+    }
+
+    function fillSupplyFromBaskets() {
+      const supplyArea = document.getElementById("supply-area");
+      supplyArea.innerHTML = "";
+
+      const basketItems = document.querySelectorAll(".basket-dropzone .animal-item");
+      basketItems.forEach((item) => {
+        const clone = createAnimalElement(
+          { type: item.dataset.type, emoji: item.textContent },
+          moveToChart
+        );
+        supplyArea.appendChild(clone);
+      });
+    }
+
+    function goToLevel2() {
+      document.getElementById("level-1").classList.remove("active");
+      document.getElementById("level-23").classList.add("active");
+
+      document.getElementById("level-title").textContent = "任務二：建立象形圖 📊";
+      document.getElementById("level-instruction").innerHTML =
+        '把動物一個一個放上圖表。每放對一個得 <strong>5分</strong>。';
+      document.getElementById("chart-legend").style.display = "inline-block";
+      document.getElementById("supply-area").style.display = "flex";
+      document.getElementById("question-container").style.display = "none";
+      document.getElementById("btn-next-2").style.display = "none";
+
+      renderChart();
+      fillSupplyFromBaskets();
+      setFeedback("level23-feedback", "把動物放到正確的一欄。", "#27ae60");
+    }
+
+    function moveToChart(animalEl, colEl) {
+      const currentSlots = colEl.querySelectorAll(".chart-slot").length;
+      if (currentSlots >= MAX_Y) {
+        flashError(colEl);
+        setFeedback("level23-feedback", "這一欄已經滿了。", "#d63031");
+        clearSelection();
+        return;
+      }
+
+      animalEl.remove();
+      clearSelection();
+
+      const slot = document.createElement("div");
+      slot.className = "chart-slot";
+      slot.textContent = animalEl.textContent;
+      colEl.appendChild(slot);
+
+      addScore(5);
+      setFeedback("level23-feedback", "放對了，繼續完成圖表！", "#00b894");
+
+      const supplyLeft = document.getElementById("supply-area").children.length;
+      if (supplyLeft === 0) {
+        setFeedback("level23-feedback", "太好了，圖表完成了！", "#00b894");
+        document.getElementById("btn-next-2").style.display = "inline-block";
+      }
+    }
+
+    function goToLevel3() {
+      currentQ = 0;
+      document.getElementById("level-title").textContent = "任務三：看圖回答 🧠";
+      document.getElementById("level-instruction").innerHTML =
+        '看著圖表回答問題。答對一題得 <strong>20分</strong>；答錯不扣分，可以再試。';
+      document.getElementById("supply-area").style.display = "none";
+      document.getElementById("btn-next-2").style.display = "none";
+      document.getElementById("question-container").style.display = "block";
+      setFeedback("level23-feedback", "先看清楚圖表，再回答問題。", "#27ae60");
+      showQuestion();
+    }
+
+    function showQuestion() {
+      const container = document.getElementById("question-container");
+
+      if (currentQ >= questions.length) {
+        container.innerHTML = `
+          <div class="final-box">
+            <h2>🎉 完成了！</h2>
+            <p style="font-size:22px; color:#2d3436; margin: 10px 0 14px;">你已經完成動物初階挑戰。</p>
+            <div class="final-score">${score} 分</div>
+          </div>
+        `;
+        setFeedback("level23-feedback", "你已經學會基本讀圖了！", "#00b894");
+        return;
+      }
+
+      const qData = questions[currentQ];
+      document.getElementById("q-text").textContent = qData.q;
+
+      const optsContainer = document.getElementById("q-options");
+      optsContainer.innerHTML = "";
+
+      qData.options.forEach((opt, index) => {
+        const btn = document.createElement("button");
+        btn.className = "option-btn";
+        btn.textContent = opt;
+        btn.onclick = () => checkAnswer(index, qData.ans, qData.hint);
+        optsContainer.appendChild(btn);
+      });
+
+      document.getElementById("q-msg").textContent = "";
+    }
+
+    function checkAnswer(selected, correct, hint) {
+      const msg = document.getElementById("q-msg");
+      const buttons = document.querySelectorAll(".option-btn");
+
+      if (selected === correct) {
+        buttons.forEach((b) => (b.disabled = true));
+        msg.style.color = "#00b894";
+        msg.textContent = "答對了！";
+
+        addScore(20);
+
+        setTimeout(() => {
+          currentQ++;
+          showQuestion();
+        }, 900);
+      } else {
+        msg.style.color = "#d63031";
+        msg.innerHTML = `再看看圖表，再試一次。<br><span style="font-size:16px; color:#636e72;">提示：${hint}</span>`;
+      }
+    }
+
+    function addTouchDrag(el, dropCallback) {
+      let ghost = null;
+
+      el.addEventListener(
+        "touchstart",
+        function (e) {
+          e.preventDefault();
+          const touch = e.touches[0];
+
+          ghost = el.cloneNode(true);
+          ghost.style.cssText = `
+            position: fixed;
+            z-index: 9999;
+            opacity: 0.85;
+            pointer-events: none;
+            font-size: 44px;
+            left: ${touch.clientX - 24}px;
+            top: ${touch.clientY - 24}px;
+            transform: scale(1.18);
+            transition: none;
+          `;
+          document.body.appendChild(ghost);
+
+          clearSelection();
+          selectedItem = el;
+          el.classList.add("selected");
+          el.style.opacity = "0.4";
+        },
+        { passive: false }
+      );
+
+      el.addEventListener(
+        "touchmove",
+        function (e) {
+          e.preventDefault();
+          if (!ghost) return;
+          const touch = e.touches[0];
+          ghost.style.left = `${touch.clientX - 24}px`;
+          ghost.style.top = `${touch.clientY - 24}px`;
+        },
+        { passive: false }
+      );
+
+      el.addEventListener(
+        "touchend",
+        function (e) {
+          e.preventDefault();
+
+          if (ghost) {
+            ghost.remove();
+            ghost = null;
+          }
+
+          el.style.opacity = "1";
+
+          const touch = e.changedTouches[0];
+          const hit = document.elementFromPoint(touch.clientX, touch.clientY);
+          const dropTarget = hit ? hit.closest(".basket, .chart-column") : null;
+
+          if (dropTarget) {
+            dropCallback(el, dropTarget);
+          } else {
+            clearSelection();
+          }
+        },
+        { passive: false }
+      );
+    }
+
+    window.onload = initLevel1;
+  </script>
+</body>
+</html>
